@@ -45,7 +45,7 @@
 
 ## Useful Related Libraries
 
-* [`EventSource` polyfill for Edge/IE and old browsers](https://github.com/Yaffle/EventSource)
+* [`EventSource` polyfill for Edge/IE and old browsers](https://github.com/Yaffle/EventSource) 🚨 since version 1.0.26, [this library contains code that could display messages against the war in Ukraine to end users](https://github.com/Yaffle/EventSource/commit/de137927e13d8afac153d2485152ccec48948a7a)
 * [`EventSource` polyfill for React Native](https://github.com/jordanbyron/react-native-event-source)
 * [`EventSource` implementation for Node](https://github.com/EventSource/eventsource)
 * [Server-Sent Events client for Go](https://github.com/donovanhide/eventsource)
@@ -60,18 +60,30 @@
 
 ## Learning Resources
 
-### English
+### English 🇺🇸
 
+* 📺 [API Updates in Real Time w. Mercure.rocks](https://www.youtube.com/watch?v=odNsxoHSkT4)
+* 📺 [Building async public APIs using HTTP/2+ and the Mercure protocol](https://www.youtube.com/watch?v=IUx47Tx0O8E)
+* 📺 [Real-time Notifications with Symfony and Mercure (Basics)](https://www.youtube.com/watch?v=kYNC47V7R_0)
+* 📺 [Real-time Chat App with Symfony and Mercure](https://www.youtube.com/watch?v=wnr2A4aKnPU)
 * [Official Push and Real-Time Capabilities for Symfony and API Platform using Mercure (Symfony blog)](https://dunglas.fr/2019/03/official-push-and-real-time-capabilities-for-symfony-and-api-platform-mercure-protocol/)
 * [Tech Workshop: Mercure by Kévin Dunglas at SensioLabs (SensioLabs)](https://blog.sensiolabs.com/2019/01/24/tech-workshop-mercure-kevin-dunglas-sensiolabs/)
 * [Real-time messages with Mercure using Laravel](http://thedevopsguide.com/real-time-notifications-with-mercure/)
 * [Using Mercure on Stackhero](https://www.stackhero.io/en/documentations/mercure-hub/getting-started)
+* [Mercure - install and run](https://mysiar.github.io/dev/2020/04/12/mercure-part1.html)
 
-### French
+### French 🇫🇷
 
-* [Tutoriel vidéo : Notifications instantanées avec Mercure (Grafikart)](https://www.grafikart.fr/tutoriels/symfony-mercure-1151)
+*  📺 [Notifications instantanées avec Mercure (Grafikart)](https://www.grafikart.fr/tutoriels/symfony-mercure-1151)
+*  📺 [Live Coding : Notifications temps réel avec Mercure](https://www.youtube.com/watch?v=tqqJ1ul2M-E)
+*  📺 [Explication des Server Sent Events (SSE) avec Mercure](https://www.youtube.com/watch?v=Q4LRN2wXuIc)
+*  📺 [Mercure : des UIs toujours synchronisées avec les données en BDD](https://www.youtube.com/watch?v=UcBa4AugNTE)
+*  📺 [Mercure, et PHP s'enamoure enfin du temps réel](https://www.youtube.com/watch?v=GugURP88Rgg)
+*  📺 [Async avec Messenger, AMQP et Mercure](https://www.youtube.com/watch?v=cHPbcuydJiA)
 * [Mercure, un protocole pour pousser des mises à jour vers des navigateurs et app mobiles en temps réel (Les-Tilleuls.coop)](https://les-tilleuls.coop/fr/blog/article/mercure-un-protocole-pour-pousser-des-mises-a-jour-vers-des-navigateurs-et-app-mobiles-en-temps-reel)
+* [Symfony et Mercure](https://afsy.fr/avent/2019/21-symfony-et-mercure)
+* [À la découverte de Mercure](https://blog.eleven-labs.com/fr/a-la-decouverte-de-mercure/)
 
-### German
+### German 🇩🇪
 
 * [Neue Symfony-Komponente: Mercure ermöglicht Echtzeitübertragung](https://entwickler.de/online/php/symfony-mercure-komponente-579885243.html)

@@ -5,10 +5,20 @@
 
 {$SERVER_NAME:localhost}
 
-log
+log {
+	format filter {
+		wrap console
+		fields {
+			uri query {
+				replace authorization REDACTED
+			}
+		}
+	}
+}
+
+{$EXTRA_DIRECTIVES}
 
 route {
-	redir / /.well-known/mercure/ui/
 	encode zstd gzip
 
 	mercure {
@@ -28,7 +38,7 @@ route {
 		{$MERCURE_EXTRA_DIRECTIVES}
 	}
 
+	redir / /.well-known/mercure/ui/
 	respond /healthz 200
-
 	respond "Not Found" 404
 }

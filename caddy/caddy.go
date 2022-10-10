@@ -90,6 +90,9 @@ type Mercure struct {
 	// The name of the authorization cookie. Defaults to "mercureAuthorization".
 	CookieName string `json:"cookie_name,omitempty"`
 
+	// The version of the Mercure protocol to be backward compatible with (only version 7 is supported)
+	ProtocolVersionCompatibility int `json:"protocol_version_compatibility,omitempty"`
+
 	hub    *mercure.Hub
 	logger *zap.Logger
 }
@@ -205,6 +208,9 @@ func (m *Mercure) Provision(ctx caddy.Context) error { //nolint:funlen
 	if len(m.CORSOrigins) > 0 {
 		opts = append(opts, mercure.WithCORSOrigins(m.CORSOrigins))
 	}
+	if m.ProtocolVersionCompatibility != 0 {
+		opts = append(opts, mercure.WithProtocolVersionCompatibility(m.ProtocolVersionCompatibility))
+	}
 
 	h, err := mercure.NewHub(opts...)
 	if err != nil {
@@ -233,7 +239,7 @@ func (m Mercure) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhtt
 }
 
 // UnmarshalCaddyfile sets up the handler from Caddyfile tokens.
-func (m *Mercure) UnmarshalCaddyfile(d *caddyfile.Dispenser) error { //nolint:funlen nolint:gocognit
+func (m *Mercure) UnmarshalCaddyfile(d *caddyfile.Dispenser) error { //nolint:funlen,gocognit
 	for d.Next() {
 		for d.NextBlock(0) {
 			switch d.Val() {
@@ -347,6 +353,22 @@ func (m *Mercure) UnmarshalCaddyfile(d *caddyfile.Dispenser) error { //nolint:fu
 				}
 
 				m.CookieName = d.Val()
+
+			case "protocol_version_compatibility":
+				if !d.NextArg() {
+					return d.ArgErr()
+				}
+
+				v, err := strconv.Atoi(d.Val())
+				if err != nil {
+					return err //nolint:wrapcheck
+				}
+
+				if v != 7 {
+					return errors.New("compatibility mode only supports protocol version 7")
+				}
+
+				m.ProtocolVersionCompatibility = v
 			}
 		}
 	}

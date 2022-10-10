@@ -2,11 +2,10 @@
 
 (function () {
   const origin = window.location.origin;
-  
   const defaultTopic = document.URL + "demo/books/1.jsonld";
   const placeholderTopic = "https://example.com/my-private-topic";
   const defaultJwt =
-    "eyJhbGciOiJIUzI1NiJ9.eyJtZXJjdXJlIjp7InB1Ymxpc2giOlsiKiJdLCJzdWJzY3JpYmUiOlsiaHR0cHM6Ly9leGFtcGxlLmNvbS9teS1wcml2YXRlLXRvcGljIiwie3NjaGVtZX06Ly97K2hvc3R9L2RlbW8vYm9va3Mve2lkfS5qc29ubGQiLCIvLndlbGwta25vd24vbWVyY3VyZS9zdWJzY3JpcHRpb25zey90b3BpY317L3N1YnNjcmliZXJ9Il0sInBheWxvYWQiOnsidXNlciI6Imh0dHBzOi8vZXhhbXBsZS5jb20vdXNlcnMvZHVuZ2xhcyIsInJlbW90ZUFkZHIiOiIxMjcuMC4wLjEifX19.z5YrkHwtkz3O_nOnhC_FP7_bmeISe3eykAkGbAl5K7c";
+    "eyJhbGciOiJIUzI1NiJ9.eyJtZXJjdXJlIjp7InB1Ymxpc2giOlsiKiJdLCJzdWJzY3JpYmUiOlsiaHR0cHM6Ly9leGFtcGxlLmNvbS9teS1wcml2YXRlLXRvcGljIiwie3NjaGVtZX06Ly97K2hvc3R9L2RlbW8vYm9va3Mve2lkfS5qc29ubGQiLCIvLndlbGwta25vd24vbWVyY3VyZS9zdWJzY3JpcHRpb25zey90b3BpY317L3N1YnNjcmliZXJ9Il0sInBheWxvYWQiOnsidXNlciI6Imh0dHBzOi8vZXhhbXBsZS5jb20vdXNlcnMvZHVuZ2xhcyIsInJlbW90ZUFkZHIiOiIxMjcuMC4wLjEifX19.KKPIikwUzRuB3DTpVw6ajzwSChwFw5omBMmMcWKiDcM";
 
   const $updates = document.getElementById("updates");
   const $subscriptions = document.getElementById("subscriptions");
@@ -17,9 +16,28 @@
   const $subscriptionsForm = document.forms.subscriptions;
 
   const error = (e) => {
-    const message = e.toString();
-    console.error(e);
-    alert(message);
+    console.log(e);
+
+    if (e.error?.message?.includes?.('Reconnecting')) {
+      // Silent reconnecting messages from the polyfill
+      return;
+    }
+
+    if (e.toString !== Object.prototype.toString) {
+      // Display relevant error message
+      alert(e.toString());
+
+      return;
+    }
+
+    if (e.statusText) {
+      // Special handling of errors from the polyfill
+      alert(e.statusText);
+
+      return;
+    }
+
+    alert('An error occured, details have been logged.');
   };
 
   const getHubUrl = (resp) => {
@@ -115,7 +133,7 @@ foo`;
     const u = new URL($settingsForm.hubUrl.value);
     topicList.forEach((topic) => u.searchParams.append("topic", topic));
     if (lastEventId.value)
-      u.searchParams.append("Last-Event-ID", lastEventId.value);
+      u.searchParams.append("lastEventID", lastEventId.value);
 
     let ol = null;
     if ($settingsForm.authorization.value === "header")
@@ -140,13 +158,13 @@ foo`;
       li.querySelector("pre").textContent = e.data;
       ol.firstChild ? ol.insertBefore(li, ol.firstChild) : ol.appendChild(li);
     };
-    updateEventSource.onerror = console.log;
+    updateEventSource.onerror = error;
     this.elements.unsubscribe.disabled = false;
   };
   $subscribeForm.elements.unsubscribe.onclick = function (e) {
     e.preventDefault();
 
-    updateEventSource.close();
+    updateEventSource && updateEventSource.close();
     this.disabled = true;
     $updates.textContent = "Unsubscribed.";
   };
@@ -226,7 +244,7 @@ foo`;
         "topic",
         "/.well-known/mercure/subscriptions{/topic}{/subscriber}"
       );
-      u.searchParams.append("Last-Event-ID", json.lastEventID);
+      u.searchParams.append("lastEventID", json.lastEventID);
 
       if (opt) subscriptionEventSource = new EventSourcePolyfill(u, opt);
       else subscriptionEventSource = new EventSource(u);
@@ -241,7 +259,7 @@ foo`;
 
         document.getElementById(s.id).remove();
       };
-      subscriptionEventSource.onerror = console.log;
+      subscriptionEventSource.onerror = error;
 
       $subscriptionsForm.elements.unsubscribe.disabled = false;
     } catch (e) {

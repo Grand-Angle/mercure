@@ -12,6 +12,8 @@ import (
 )
 
 // SubscribeHandler creates a keep alive connection and sends the events to the subscribers.
+//
+//nolint:funlen,gocognit
 func (h *Hub) SubscribeHandler(w http.ResponseWriter, r *http.Request) {
 	assertFlusher(w)
 
@@ -20,6 +22,14 @@ func (h *Hub) SubscribeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer h.shutdown(s)
+
+	var expireTimer *time.Timer
+	var expireTimerC <-chan time.Time
+	if s.Claims != nil && s.Claims.ExpiresAt != nil {
+		expireTimer = time.NewTimer(time.Until(s.Claims.ExpiresAt.Time))
+		defer expireTimer.Stop()
+		expireTimerC = expireTimer.C
+	}
 
 	var heartbeatTimer *time.Timer
 	var heartbeatTimerC <-chan time.Time
@@ -41,6 +51,12 @@ func (h *Hub) SubscribeHandler(w http.ResponseWriter, r *http.Request) {
 		select {
 		case <-r.Context().Done():
 			if c := h.logger.Check(zap.DebugLevel, "connection closed by the client"); c != nil {
+				c.Write(zap.Object("subscriber", s))
+			}
+
+			return
+		case <-expireTimerC:
+			if c := h.logger.Check(zap.DebugLevel, "JWT expired: close the connection"); c != nil {
 				c.Write(zap.Object("subscriber", s))
 			}
 
@@ -76,7 +92,7 @@ func (h *Hub) SubscribeHandler(w http.ResponseWriter, r *http.Request) {
 
 // registerSubscriber initializes the connection.
 func (h *Hub) registerSubscriber(w http.ResponseWriter, r *http.Request) *Subscriber {
-	s := NewSubscriber(retrieveLastEventID(r), h.logger)
+	s := NewSubscriber(retrieveLastEventID(r, h.opt, h.logger), h.logger)
 	s.Debug = h.debug
 	s.RemoteAddr = r.RemoteAddr
 	var privateTopics []string
@@ -153,12 +169,29 @@ func sendHeaders(w http.ResponseWriter, s *Subscriber) {
 }
 
 // retrieveLastEventID extracts the Last-Event-ID from the corresponding HTTP header with a fallback on the query parameter.
-func retrieveLastEventID(r *http.Request) string {
+func retrieveLastEventID(r *http.Request, opt *opt, logger Logger) string {
 	if id := r.Header.Get("Last-Event-ID"); id != "" {
 		return id
 	}
 
-	return r.URL.Query().Get("Last-Event-ID")
+	query := r.URL.Query()
+	if id := query.Get("lastEventID"); id != "" {
+		return id
+	}
+
+	if legacyEventIDValues, present := query["Last-Event-ID"]; present {
+		if opt.isBackwardCompatiblyEnabledWith(7) {
+			logger.Info("Deprecated: the 'Last-Event-ID' query parameter is deprecated since the version 8 of the protocol, use 'lastEventID' instead.")
+
+			if len(legacyEventIDValues) != 0 {
+				return legacyEventIDValues[0]
+			}
+		} else {
+			logger.Info("Unsupported: the 'Last-Event-ID' query parameter is not supported anymore, use 'lastEventID' instead or enable backward compatibility with version 7 of the protocol.")
+		}
+	}
+
+	return ""
 }
 
 // Write sends the given string to the client.
