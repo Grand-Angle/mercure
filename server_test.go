@@ -221,7 +221,7 @@ func TestServe(t *testing.T) {
 func TestClientClosesThenReconnects(t *testing.T) {
 	l := zap.NewNop()
 	u, _ := url.Parse("bolt://test.db")
-	bt, _ := NewTransport(u, l, nil)
+	bt, _ := NewTransport(u, l)
 	h := createAnonymousDummy(WithLogger(l), WithTransport(bt))
 	transport := h.transport.(*BoltTransport)
 	defer os.Remove("test.db")
@@ -382,7 +382,7 @@ func TestMetricsCollect(t *testing.T) {
 	body = url.Values{"topic": {"http://example.com/foo/1"}, "data": {"second hello"}, "id": {"second"}}
 	server.publish(body)
 
-	server.assertMetric("mercure_subscribers 3")
+	server.assertMetric("mercure_subscribers_connected 3")
 	server.assertMetric("mercure_subscribers_total 4")
 	server.assertMetric("mercure_updates_total 2")
 }

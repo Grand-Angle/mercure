@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/spf13/viper"
@@ -25,6 +26,12 @@ func TestNewHub(t *testing.T) {
 	h := createDummy()
 
 	assert.IsType(t, &viper.Viper{}, h.config)
+
+	assert.False(t, h.opt.anonymous)
+	assert.Equal(t, defaultCookieName, h.opt.cookieName)
+	assert.Equal(t, 40*time.Second, h.opt.heartbeat)
+	assert.Equal(t, 5*time.Second, h.opt.dispatchTimeout)
+	assert.Equal(t, 600*time.Second, h.opt.writeTimeout)
 }
 
 func TestNewHubWithConfig(t *testing.T) {
@@ -127,6 +134,52 @@ func TestInvalidWithProtocolVersionCompatibility(t *testing.T) {
 
 	o := WithProtocolVersionCompatibility(6)
 	require.NotNil(t, o(op))
+}
+
+func TestOriginsValidator(t *testing.T) {
+	op := &opt{}
+
+	validOrigins := [][]string{
+		{"*"},
+		{"null"},
+		{"https://example.com"},
+		{"http://example.com:8000"},
+		{"https://example.com", "http://example.org"},
+		{"https://example.com", "*"},
+		{"null", "https://example.com:3000"},
+		{"capacitor://"},
+		{"capacitor://www.example.com"},
+		{"ionic://"},
+		{"foobar://"},
+	}
+
+	invalidOrigins := [][]string{
+		{"f"},
+		{"foo"},
+		{"https://example.com", "bar"},
+		{"https://example.com/"},
+		{"https://user@example.com"},
+		{"https://example.com:abc"},
+		{"https://example.com", "http://example.org/hello"},
+		{"https://example.com?query", "*"},
+		{"null", "https://example.com:3000#fragment"},
+	}
+
+	for _, origins := range validOrigins {
+		o := WithPublishOrigins(origins)
+		require.Nil(t, o(op), "error while not expected for %#v", origins)
+
+		o = WithCORSOrigins(origins)
+		require.Nil(t, o(op), "error while not expected for %#v", origins)
+	}
+
+	for _, origins := range invalidOrigins {
+		o := WithPublishOrigins(origins)
+		require.NotNil(t, o(op), "no error while expected for %#v", origins)
+
+		o = WithCORSOrigins(origins)
+		require.NotNil(t, o(op), "no error while expected for %#v", origins)
+	}
 }
 
 func createDummy(options ...Option) *Hub {
