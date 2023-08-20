@@ -2,6 +2,7 @@ package mercure
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -104,7 +105,7 @@ func TestStop(t *testing.T) {
 			defer wg.Done()
 			req := httptest.NewRequest(http.MethodGet, defaultHubURL+"?topic=http://example.com/foo", nil)
 
-			w := httptest.NewRecorder()
+			w := newSubscribeRecorder()
 			hub.SubscribeHandler(w, req)
 
 			r := w.Result()
@@ -129,11 +130,30 @@ func TestWithProtocolVersionCompatibility(t *testing.T) {
 	assert.False(t, op.isBackwardCompatiblyEnabledWith(6))
 }
 
-func TestInvalidWithProtocolVersionCompatibility(t *testing.T) {
+func TestWithProtocolVersionCompatibilityVersions(t *testing.T) {
 	op := &opt{}
 
-	o := WithProtocolVersionCompatibility(6)
-	require.NotNil(t, o(op))
+	testCases := []struct {
+		version int
+		ok      bool
+	}{
+		{5, false},
+		{6, false},
+		{7, true},
+		{8, false},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("version %d", tc.version), func(t *testing.T) {
+			o := WithProtocolVersionCompatibility(tc.version)
+
+			if tc.ok {
+				require.Nil(t, o(op))
+			} else {
+				require.Error(t, o(op))
+			}
+		})
+	}
 }
 
 func TestOriginsValidator(t *testing.T) {
@@ -212,6 +232,12 @@ func createAnonymousDummy(options ...Option) *Hub {
 }
 
 func createDummyAuthorizedJWT(h *Hub, r role, topics []string) string {
+	return createDummyAuthorizedJWTWithPayload(h, r, topics, struct {
+		Foo string `json:"foo"`
+	}{Foo: "bar"})
+}
+
+func createDummyAuthorizedJWTWithPayload(h *Hub, r role, topics []string, payload interface{}) string {
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	var key []byte
@@ -221,10 +247,6 @@ func createDummyAuthorizedJWT(h *Hub, r role, topics []string) string {
 		key = h.publisherJWT.key
 
 	case roleSubscriber:
-		var payload struct {
-			Foo string `json:"foo"`
-		}
-		payload.Foo = "bar"
 		token.Claims = &claims{
 			Mercure: mercureClaim{
 				Subscribe: topics,

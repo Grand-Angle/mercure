@@ -1,8 +1,9 @@
-# Install the Mercure.rocks hub
+# Install the Mercure.rocks Hub
 
 ## Managed and HA Versions
 
-[Managed and High Availability versions of Mercure.rocks](https://mercure.rocks/pricing) are available, give them a try!
+The easiest way to get started with Mercure is to subscribe to the [Cloud version](https://mercure.rocks/pricing).
+Give it a try!
 
 ## Prebuilt Binary
 
@@ -10,9 +11,9 @@ The Mercure.rocks hub is available as a custom build of the [Caddy web server](h
 
 First, download the archive corresponding to your operating system and architecture [from the release page](https://github.com/dunglas/mercure/releases), extract the archive and open a shell in the resulting directory.
 
-*Note:* macOS users must use the `Darwin` binary.
+*Note:* macOS users must download the `Darwin` binary, then run `xattr -d com.apple.quarantine ./mercure` [to release the hub from quarantine](troubleshooting.md#macos-localhost-installation-error).
 
-Then, to start the Mercure.rocks Hub in development mode on Linux and macOS, run:
+To start the Mercure.rocks Hub in development mode on Linux and macOS, run:
 
 ```console
 MERCURE_PUBLISHER_JWT_KEY='!ChangeThisMercureHubJWTSecretKey!' \
@@ -114,10 +115,10 @@ If you prefer to use `docker-compose` to run the Mercure.rocks hub, here's a sam
 
 ```yaml
 # docker-compose.yml
-version: "3.7"
+version: '3'
 
 services:
-  caddy:
+  mercure:
     image: dunglas/mercure
     restart: unless-stopped
     environment:
@@ -128,16 +129,18 @@ services:
     # Uncomment the following line to enable the development mode
     #command: /usr/bin/caddy run --config /etc/caddy/Caddyfile.dev
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
     volumes:
-      - caddy_data:/data
-      - caddy_config:/config
+      - mercure_data:/data
+      - mercure_config:/config
 
 volumes:
-  caddy_data:
-  caddy_config:
+  mercure_data:
+  mercure_config:
 ```
+
+Alternatively, you may want to [run the Mercure.rocks hub behind Traefik Proxy](traefik.md).
 
 ## Arch Linux
 
